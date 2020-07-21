@@ -109,6 +109,36 @@ class WebClient(BaseClient):
             "admin.apps.restricted.list", http_verb="GET", params=kwargs
         )
 
+    def admin_conversations_restrictAccess_addGroup(
+        self, **kwargs
+    ) -> Union[Future, SlackResponse]:
+        """Add an allowlist of IDP groups for accessing a channel."""
+        return self.api_call(
+            "admin.conversations.restrictAccess.addGroup",
+            http_verb="GET",
+            params=kwargs,
+        )
+
+    def admin_conversations_restrictAccess_listGroups(
+        self, **kwargs
+    ) -> Union[Future, SlackResponse]:
+        """List all IDP Groups linked to a channel."""
+        return self.api_call(
+            "admin.conversations.restrictAccess.listGroups",
+            http_verb="GET",
+            params=kwargs,
+        )
+
+    def admin_conversations_restrictAccess_removeGroup(
+        self, **kwargs
+    ) -> Union[Future, SlackResponse]:
+        """Remove a linked IDP group linked from a private channel."""
+        return self.api_call(
+            "admin.conversations.restrictAccess.removeGroup",
+            http_verb="GET",
+            params=kwargs,
+        )
+
     def admin_conversations_setTeams(self, **kwargs) -> Union[Future, SlackResponse]:
         """Set the workspaces in an Enterprise grid org that connect to a channel."""
         return self.api_call("admin.conversations.setTeams", json=kwargs)
@@ -325,6 +355,24 @@ class WebClient(BaseClient):
             kwargs.update({"channel_ids": channel_ids})
         return self.api_call("admin.usergroups.addChannels", json=kwargs)
 
+    def admin_usergroups_addTeams(
+        self, *, usergroup_id: str, team_ids: Union[str, List[str]], **kwargs
+    ) -> Union[Future, SlackResponse]:
+        """Associate one or more default workspaces with an organization-wide IDP group.
+
+        Args:
+            usergroup_id (str): ID of the IDP group. e.g. 'S1234'
+            team_ids (str or list): A comma separated list of encoded team (workspace) IDs.
+                Each workspace MUST belong to the organization associated with the token.
+                e.g. 'T12345678,T98765432' or ['T12345678', 'T98765432']
+        """
+        kwargs.update({"usergroup_id": usergroup_id})
+        if isinstance(team_ids, list):
+            kwargs.update({"team_ids": ",".join(team_ids)})
+        else:
+            kwargs.update({"team_ids": team_ids})
+        return self.api_call("admin.usergroups.addTeams", json=kwargs)
+
     def admin_usergroups_listChannels(
         self, *, usergroup_id: str, **kwargs
     ) -> Union[Future, SlackResponse]:
@@ -518,6 +566,21 @@ class WebClient(BaseClient):
         kwargs.update({"id": id})
         self._update_call_participants(kwargs, users)
         return self.api_call("calls.participants.add", http_verb="POST", params=kwargs)
+
+    def calls_participants_remove(
+        self, *, id: str, users: Union[str, List[Dict[str, str]]], **kwargs
+    ) -> Union[Future, SlackResponse]:
+        """Registers participants removed from a Call.
+
+        Args:
+            id (str): id returned when registering the call using the calls.add method.
+            users: (list): The list of users to remove as participants in the Call.
+        """
+        kwargs.update({"id": id})
+        self._update_call_participants(kwargs, users)
+        return self.api_call(
+            "calls.participants.remove", http_verb="POST", params=kwargs
+        )
 
     def calls_update(self, *, id: str, **kwargs) -> Union[Future, SlackResponse]:
         """Updates information about a Call.
@@ -929,6 +992,18 @@ class WebClient(BaseClient):
     def conversations_list(self, **kwargs) -> Union[Future, SlackResponse]:
         """Lists all channels in a Slack team."""
         return self.api_call("conversations.list", http_verb="GET", params=kwargs)
+
+    def conversations_mark(
+        self, *, channel: str, ts: str, **kwargs
+    ) -> Union[Future, SlackResponse]:
+        """Sets the read cursor in a channel.
+
+        Args:
+            channel (str): Channel or conversation to set the read cursor for e.g. 'C1234567890'
+            ts (str): Unique identifier of message to mark as most recently seen in the convo e.g. '1593473566.000200'
+        """
+        kwargs.update({"channel": channel, "ts": ts})
+        return self.api_call("conversations.mark", json=kwargs)
 
     def conversations_members(
         self, *, channel: str, **kwargs
